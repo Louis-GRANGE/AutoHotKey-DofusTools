@@ -2,10 +2,9 @@
 
 Class GUIInfo extends GUIWindow
 {
-	__New(Title := "Untitled - AhkPad", TickEnable := false, IsVisible := true) ;Construtor
+	__New(Title := "Untitled - AhkPad", TickSpeed := 0, IsVisible := true) ;Construtor
 	{
-        super.__New(Title, TickEnable, IsVisible)
-		this.CustomColor := "EEAA99"
+        super.__New(Title, TickSpeed, IsVisible)
 		this.BackColor := "EEAA99"
 		this.Opt("+lastfound +alwaysontop -caption +toolwindow +resize")  ; +ToolWindow avoids a taskbar button and an alt-tab menu item.
 		
@@ -17,17 +16,17 @@ Class GUIInfo extends GUIWindow
 		this.DataClass := this.Add("Text", "W2000 CLime", "XXXXX YYYYY")
 		this.DataWindowPosSize := this.Add("Text", "W2000 CLime", "XXXXX YYYYY")
 		; Make all pixels of this color transparent and make the text itself translucent (150):
+		;this.CustomColor := "EEAA99"
 		;WinSetTransColor(CustomColor, "200", this.GUI)
-		;SetTimer UpdateOSD, 200
-		;Gosub UpdateOSD  ; Make the first update immediate rather than waiting for the timer.
-		
+
 		this.ShowColorCursor := this.Add("Progress", "x350 y30 w38 h38", "100")
 		this.ShowColorOffsetCursor := this.Add("Progress", "x390 y30 w38 h38", "100")
 
 		this.BackColor := "3A3635"
-		this.Show("x0 y20 NoActivate w550 h300")  ; NoActivate avoids deactivating the currently active window.
 
-		OnMessage(0x201, On_WM_LBUTTONDOWN) ; to move the window by dragging 
+		;if(this.IsVisible)
+	;		this.Show("AutoSize Center")  ; NoActivate avoids deactivating the currently active window.
+
 	}
 
 	Update()

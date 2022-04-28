@@ -11,6 +11,7 @@ class CustomMenu extends MenuBar
 	{
         this.SBAllWindows := Menu()
         this.SBAllWindows.Base := this
+        
         this.AllGUI := AllGUI
         this.CurrentGUI := GUIToAddMenu
         for GuiWindow in AllGUI
@@ -18,6 +19,7 @@ class CustomMenu extends MenuBar
             this.SBAllWindows.Add(GUIWindow.Title, MenuHandler)
             GUIWindow.SetVisibility(false)
         }
+        GUIToAddMenu.SetVisibility(true)
         ;this.Add("Random", MenuHandler)
         
         for GuiWindow in AllGUI

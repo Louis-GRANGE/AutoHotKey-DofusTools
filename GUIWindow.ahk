@@ -1,12 +1,32 @@
 Class GUIWindow extends Gui
 {
-	__New(Title := "Untitled - AhkPad", TickEnable := false, IsVisible := true) ;Construtor
+	__New(Title := "Untitled - AhkPad", TickSpeed := 0, IsVisible := true) ;Construtor
 	{
-        this.TickEnable := TickEnable
+        this.TickSpeed := TickSpeed
         this.IsVisible := IsVisible
-		MyGUIWindow.Push(this)
+		WINDOWS.Push(this) ;ADD to the list of all windows
 		super.__New("+Resize", Title, this)
-		OnMessage(0x201, On_WM_LBUTTONDOWN) ; to move the window by dragging 
+		OnMessage(0x201, On_WM_LBUTTONDOWN) ; to move the window by dragging
+		
+		;this.Show("AutoSize Center")
+		this.Show("xCenter yCenter NoActivate w550 h300")
+
+		if(!this.IsVisible)
+		{
+			;this.Show("AutoSize Center")
+			;this.Show("x0 y20 NoActivate w550 h300")
+			this.Hide()
+		}
+
+		this.UpdateFunc := () => this.Update()
+
+		SetTimer(this.UpdateFunc, TickSpeed)
+	}
+
+	SetTick(TickSpeed)
+	{
+		SetTimer(this.UpdateFunc, TickSpeed)
+		this.TickSpeed := TickSpeed
 	}
 
 	ToggleView()

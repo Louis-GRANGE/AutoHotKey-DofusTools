@@ -1,4 +1,3 @@
-#HotIf
 ; Recommended for performance and compatibility with future AutoHotkey releases.
 ; #Warn  ; Enable warnings to assist with detecting common errors.
 
@@ -6,35 +5,51 @@
 ;SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir A_ScriptDir ; Ensures a consistent starting directory.
 #Include WindowInfo.ahk
+#Include 'WindowMacro.ahk'
 #Include Menu.ahk
+
+OutputDebug("[Init] Program start\n")
 
 ; Init Update Function
 SetTimer UpdateOSD, 100
 
 ; VARIABLES
 DofusClassName := "ApolloRuntimeContentWindow"
-MyGUIWindow := []
+WINDOWS := []
+
+GUIInfo("NEWGUI1", 10, true)
+GUIInfo("NEWGUI2", 10, false)
+GUIMacro(,10,false)
+
+CustomMenu(WINDOWS[3], WINDOWS) ;ADD menu on all active windows
 
 UpdateOSD()
 {
-	For GuiWin in MyGUIWindow
-		if(GuiWin.TickEnable)
-			GuiWin.Update()
+	For GuiWin in WINDOWS
+		;if(GuiWin.TickEnable)
+			;GuiWin.Update()
 	return
 }
+;Hotstring "::btw", "by the way"
 
 F1::
 {
-	AllCustomWindow := [GUIInfo("NEWGUI1", true, true), GUIInfo("NEWGUI2")]
-	CustomMenu(MyGUIWindow[1], AllCustomWindow)
-    return
+	For GuiWin in WINDOWS
+		if(GuiWin.TickSpeed != 0)
+			GuiWin.SetTick(0)
+		else
+			GuiWin.SetTick(10)
+	return
 }
 
 F2::
 {
-	MouseGetPos &xpos, &ypos 
-	ToolTip "The cursor is at X" xpos " Y" ypos "."
-	SetTimer () => ToolTip(), -5000
+	For key in WINDOWS[3].Macro
+	{
+		OutputDebug "Send " key.KeyName 
+		Send "{" key.KeyName (key.State == 0 ? " up" : " down") "}"
+		;Sleep(10)
+	}
 	return
 }
 
@@ -96,7 +111,7 @@ F9::
 F10::
 {
 	;MyGUIWindow.Push(GUIWindow("NEWGUI" . MyGUIWindow.Length)) ; TO ADD NEW GUI
-	MyGUIWindow[1].ToggleView()
+	WINDOWS[1].ToggleView()
 	return
 }
 
