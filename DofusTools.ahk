@@ -19,7 +19,7 @@ WINDOWS := []
 
 GUIInfo("NEWGUI1", 10, true)
 GUIInfo("NEWGUI2", 10, false)
-GUIMacro(,10,false)
+GUIMacro(,1,false)
 
 CustomMenu(WINDOWS[3], WINDOWS) ;ADD menu on all active windows
 
@@ -44,12 +44,7 @@ F1::
 
 F2::
 {
-	For key in WINDOWS[3].Macro
-	{
-		OutputDebug "Send " key.KeyName 
-		Send "{" key.KeyName (key.State == 0 ? " up" : " down") "}"
-		;Sleep(10)
-	}
+	WINDOWS[3].SendMacro()
 	return
 }
 
