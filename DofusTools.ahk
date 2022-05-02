@@ -5,8 +5,10 @@
 ;SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir A_ScriptDir ; Ensures a consistent starting directory.
 #Include WindowInfo.ahk
-#Include 'WindowMacro.ahk'
+#Include WindowMacro.ahk
 #Include Menu.ahk
+#Include Drawing.ahk
+#Include Vector.ahk
 
 OutputDebug("[Init] Program start\n")
 
@@ -17,9 +19,9 @@ SetTimer UpdateOSD, 100
 DofusClassName := "ApolloRuntimeContentWindow"
 WINDOWS := []
 
-GUIInfo("NEWGUI1", 10, true)
-GUIInfo("NEWGUI2", 10, false)
-GUIMacro(,1,false)
+GUIInfo("NEWGUI1", 0, true)
+GUIInfo("NEWGUI2", 0, false)
+WindowMacro := GUIMacro(,1,false)
 
 CustomMenu(WINDOWS[3], WINDOWS) ;ADD menu on all active windows
 
@@ -44,23 +46,19 @@ F1::
 
 F2::
 {
-	WINDOWS[3].SendMacro()
+	WindowMacro.GUICreateEditMacro.SendMacro()
 	return
 }
 
 F3::
 {
-	Title := WinGetTitle("A")
-	WinClass := WinGetClass("A")
-	ToolTip "Active Window: " Title  "`nThe active window's class is " WinClass
-	SetTimer () => ToolTip(), -5000
+	WindowMacro.GUICreateEditMacro.DisplayMouseWay(true)
 	return
 }
 
 F4::
 {
-	WinClass := WinGetClass("A")
-	WinSetRegion , "ahk_class" WinClass
+	WindowMacro.GUICreateEditMacro.DisplayMouseWay(false)
 	return
 }
 

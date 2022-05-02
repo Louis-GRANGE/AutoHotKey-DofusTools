@@ -12,13 +12,13 @@ Class GUIEditingKey extends Gui
         this.BackColor := "3A3635"
 
         this.Add("Text", "x10 y10 cLime", "Timer (s): ")
-        this.Timer := this.Add("Edit", "x150 y10 r1 Number vEditTime w150 h10", GUIMacroRef.Macro[RowNumber].AtTime/1000)
+        this.Timer := this.Add("Edit", "x150 y10 r1 Number vEditTime w150 h10" , Format("{:.2f}", GUIMacroRef.Keys[RowNumber].AtTime))
 
         this.Add("Text", "x10 y50 cLime", "Key: ")
-        this.Input := this.Add("Edit", "x150 y50 r1 vEditKey w150 h10", GUIMacroRef.Macro[RowNumber].Name)
+        this.Input := this.Add("Edit", "x150 y50 r1 vEditKey w150 h10", GUIMacroRef.Keys[RowNumber].Name)
 
         this.Add("Text", "x10 y90 cLime", "State: ")
-        this.State := this.Add("DropDownList", "x150 y90 w100 vStateChoise Choose" GUIMacroRef.Macro[RowNumber].State + 1, ["Up","Down"])
+        this.State := this.Add("DropDownList", "x150 y90 w100 vStateChoise Choose" GUIMacroRef.Keys[RowNumber].State + 1, ["Up","Down"])
         
         ; Close Button
         this.CloseBtn := this.Add("Button", "x10 y220 Default w80", "Close")
@@ -35,7 +35,7 @@ Class GUIEditingKey extends Gui
 
     BtnOK_Click(GuiCtrlObj, n)
     {        
-        this.GUIMacroRef.EditKeyAtRow(this.RowNumber, this.Input.Value, this.State.Value - 1, this.Timer.Value)
+        this.GUIMacroRef.EditKeyAtRow(this.RowNumber, this.Input.Value, this.State.Value - 1, this.Timer.Value * 1000)
         this.Destroy()
     }
 

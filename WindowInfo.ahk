@@ -23,7 +23,7 @@ Class GUIInfo extends GUIWindow
 		this.ShowColorOffsetCursor := this.Add("Progress", "x390 y30 w38 h38", "100")
 
 		this.BackColor := "3A3635"
-
+		this.SetTick(10)
 		;if(this.IsVisible)
 	;		this.Show("AutoSize Center")  ; NoActivate avoids deactivating the currently active window.
 

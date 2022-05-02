@@ -1,175 +1,139 @@
-﻿#Include GUIWindow.ahk
-#Include WindowEditingKey.ahk
+#include WindowCreateMacro.ahk
+#Include GUIWindow.ahk
+
+Class MacroData
+{
+    __New(Name, HotKeyShortCutStr, Keys, MousePos) ;Construtor
+	{
+        this.Name := Name
+        this.Keys := Keys
+        this.MousePos := MousePos
+        this.HotKeyShortCutStr := HotKeyShortCutStr
+
+        this.HotKeyFunc := (ThisHotkey) => this.SendMacro(ThisHotkey)
+        this.HotKey := Hotkey(HotKeyShortCutStr, this.HotKeyFunc)
+    }
+
+    ; ======================= FUNCTION =====================
+	SendMacro(ThisHotkey)
+	{
+		StartTime := A_TickCount
+		KeyIndex := 1
+		MouseIndex := 1
+		whileSize := (this.Keys.Length < this.MousePos.Length ? this.MousePos.Length : this.Keys.Length)
+
+		while((this.Keys.Length < this.MousePos.Length ? MouseIndex : KeyIndex) < whileSize)
+		{
+			timer := (A_TickCount - StartTime) / 1000
+			if(KeyIndex < this.Keys.Length && timer > this.Keys[KeyIndex].AtTime)
+			{
+				Send "{"  this.Keys[KeyIndex].Name (this.Keys[KeyIndex].State == 0 ? " up" : " down") "}"
+				KeyIndex := KeyIndex + 1
+			}
+			if(MouseIndex < this.MousePos.Length && timer > this.MousePos[MouseIndex].AtTime)
+			{
+				MouseMove(this.MousePos[MouseIndex].Position.x, this.MousePos[MouseIndex].Position.y) ;The speed to move the mouse in the range 0 (fastest) to 100 (slowest).
+				MouseIndex := MouseIndex + 1
+			}
+		}
+	}
+
+    ChangeHotKey(HotKeyShortCutStr)
+    {
+        Hotkey(this.HotKeyShortCutStr, "off")
+        this.HotKeyShortCutStr := HotKeyShortCutStr
+        Hotkey(this.HotKeyShortCutStr, this.HotKeyFunc)
+    }
+
+    TurnOn()
+    {
+        Hotkey(this.HotKeyShortCut, "on")
+    }
+
+    TurnOff()
+    {
+        Hotkey(this.HotKeyShortCut, "off")
+    }
+}
+
+
 
 Class GUIMacro extends GUIWindow
 {
-	__New(Title := "Macro", TickSpeed := 0, IsVisible := true) ;Construtor
+	__New(Title := "Keys", TickSpeed := 0, IsVisible := true) ;Construtor
 	{
-		this.Macro := []
-		this.detectKeyboard := true
-		this.detectMouse := false
-		this.StartTime := A_TickCount
-		this.ListeningInput := false
+        this.MacrosData := []
+        this.MacroSelectEditIndex := 0
 
         super.__New(Title, TickSpeed, IsVisible)
-
 		this.Opt("+lastfound +alwaysontop -caption +toolwindow +resize")  ; +ToolWindow avoids a taskbar button and an alt-tab menu item.
-		this.Show("w290 h625")
-		
-		this.SetFont("s32")  ; Set a large font size (32-point).
-		this.Add("Text", "VMyText CLime", "Macro")
+        this.Show("w435 h625")
+		this.SetFont("s24")
+		this.Add("Text", "x150 y5 VMyText CLime", "Macro")
+        this.BackColor := "3A3635"
 
+        this.SetFont("s10")
+        this.Tabs := this.Add("Tab", "-Multi x5 y45 w420 h550 cFFFFFF", ["Macros", "Create / Edit"])
+        this.Tab_ChangeFunc := (GuiCtrlObj, Info) => this.Tab_Change(GuiCtrlObj, Info) ; Callback Btn
+        this.Tabs.OnEvent("Change", this.Tab_ChangeFunc) ; Call BtnOK_ClickFunc when clicked.
+        
+		; =======================  TAB 1  ========================= for all macros
 		this.SetFont("s10")
-		this.TImportant := this.Add("Text", "x10 y80 W2000 Cff0000 Hidden", "Listening...")
-		this.LVKeysAction := this.Add("ListView","x10 y100 NoSort -ReadOnly -WantF2 +Report r20 w200",["Name","State","Time (en s)"])
-
+		this.LVMacros := this.Add("ListView","x10 y130 NoSort -ReadOnly -WantF2 +Report r20 w300",["Name                     ", "HotKey","Keys","Mouse Pos"])
 		; Notify the script whenever the user double clicks a row:
-		this.LV_DoubleClickFunc := (LV, RowNumber) => this.LV_DoubleClick(LV, RowNumber)
-		this.LVKeysAction.OnEvent("DoubleClick", this.LV_DoubleClickFunc)
+		this.LV_DoubleClickMacroFunc := (LV, RowNumber) => this.LV_DoubleClickMacro(LV, RowNumber)
+		this.LV_ItemSelectMacroFunc := (LV, RowNumber, other) => this.LV_ItemSelectMacro(LV, RowNumber, other)
+		this.LVMacros.OnEvent("DoubleClick", this.LV_DoubleClickMacroFunc)
+		this.LVMacros.OnEvent("ItemSelect", this.LV_ItemSelectMacroFunc)    
+        
+        
+        
+        ; =======================  TAB 2  =========================
+        this.Tabs.UseTab(2)
+        this.GUICreateEditMacro := GUICreateMacro(this)
 
-		; Start Listen Inputs Button
-        this.BtnListen := this.Add("Button", "x50 y550 Default w80", "Start")
-        this.BtnListen_ClickFunc := (GuiCtrlObj, n) => this.BtnListen_Click(GuiCtrlObj, n) ; Callback Btn
-        this.BtnListen.OnEvent("Click", this.BtnListen_ClickFunc) ; Call BtnOK_ClickFunc when clicked.
-
-		this.BackColor := "3A3635"
-		
-
-		this.ListeningTextEditFunc := () => this.ListeningTextEdit()
-	}
-
-	ListeningTextEdit()
-	{
-		if(this.TImportant.text == "Listening...")
-			this.TImportant.text := "Listening"
-		if(this.TImportant.text == "Listening..")
-			this.TImportant.text := "Listening..."
-		if(this.TImportant.text == "Listening.")
-			this.TImportant.text := "Listening.."
-		if(this.TImportant.text == "Listening")
-			this.TImportant.text := "Listening."
-	}
-
-	Update()
-	{
-		if(this.ListeningInput)
-			this.CheckKeyDown()
-	}
-
-	CheckKeyDown()
-	{
-		key := this.AnyKeyIsDown(this.detectKeyboard, this.detectMouse)
-		if (key)
-		{
-			this.AddKey(key, A_TickCount - this.StartTime)
-		}
-	}
-
-	AnyKeyIsDown(detectKeyboard:=1,detectMouse:=1)
-	{ ; return whatever key is down that has the largest scan code
-		if (detectKeyboard) {
-			loop 84
-			{ ; detect all common physical keys: https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
-				keyname:=GetKeyName("sc" Format("{1:x}",A_Index))
-				;MsgBox(keyname)
-				if (GetKeyState(keyname) && this.GetLastStateOfKey(keyname) == 0)
-				{
-					return {Name: keyname, State: 1} ; KEY DOWN
-				}
-				else
-				{
-					if(!GetKeyState(keyname) && this.GetLastStateOfKey(keyname) == 1)
-					{
-						return {Name: keyname, State: 0} ; KEY UP
-					}
-				}
-			}
-		}
-		if (detectMouse)
-		{
-			mouseArr := ["LButton","RButton","MButton","XButton1","XButton2"]
-			loop mouseArr.Length {
-				keyname := mouseArr[A_Index]
-				if (GetKeyState(keyname) && this.GetLastStateOfKey(keyname) == 0) {
-					return {Name: mouseArr[A_Index], State: 1}
-				}
-				else
-				{
-					if(!GetKeyState(keyname) && this.GetLastStateOfKey(keyname) == 1)
-					{
-						return {Name: keyname, State: 0}
-					}
-				}
-			}
-		}
-		return false
-	}
-
-	GetLastStateOfKey(keyname)
-	{
-		if(this.Macro.Length == 0)
-			return 0
-		loop this.Macro.Length
-		{
-			index := this.Macro.Length - 1 * A_Index + 1
-			key := this.Macro[index]
-
-			if(key.Name == keyname)
-			{
-				return key.State
-			}
-		}
-		return 0
-	}
-
-	EditKeyAtRow(RowNumber, Name, State, AtTime)
-	{
-		this.Macro[RowNumber].Name := Name
-        this.Macro[RowNumber].AtTime := AtTime
-        this.Macro[RowNumber].State := State
-
-        this.LVKeysAction.Modify(RowNumber,, Name, (State == 0 ? "Up" : "Down"), AtTime)
-	}
-
-	AddKey(key, atTime)
-	{
-		this.Macro.Push({Name: key.Name, State: key.State, AtTime: atTime})
-		this.LVKeysAction.Add(, key.Name, (key.State == 0 ? "Up" : "Down"), atTime/1000)
-	}
-
-	; CALLBACKS
-	;List View for Editing
-	LV_DoubleClick(LV, RowNumber)
-	{
-		GUIEditingKey(this, LV, RowNumber)
-	}
-	;Listen Btn
-	BtnListen_Click(GuiCtrlObj, n)
-    {
-        this.ListeningInput := !this.ListeningInput
-		this.StartTime := A_TickCount
-
-		GuiCtrlObj.Text := (this.ListeningInput ? "Stop" : "Start")
-		if(this.ListeningInput)
-			this.TImportant.Visible := 1
-		else
-			this.TImportant.Visible := 0
-		SetTimer(this.ListeningTextEditFunc, (this.ListeningInput ? 200 : 0))
+        ;this.MacrosData.Push(MacroData("Name", {Name: "A", State: 1, AtTime: Format("{:.2f}", 1)}, {Position: Vector2(0, 0), AtTime: Format("{:.2f}", 1)}))
+        ;this.AddMacro("Name", [{Name: "A", State: 1, AtTime: Format("{:.2f}", 1)}], [{Position: Vector2(0, 0), AtTime: Format("{:.2f}", 1)}])
     }
 
+    AddMacro(Name, HotKey, Keys, MousePos)
+    {
+		;HotKey()
+        if(this.MacroSelectEditIndex)
+        {
+            this.MacrosData[this.MacroSelectEditIndex].ChangeHotKey(HotKey)
+            this.MacrosData[this.MacroSelectEditIndex].Name := Name
+            this.MacrosData[this.MacroSelectEditIndex].Keys := Keys
+            this.MacrosData[this.MacroSelectEditIndex].MousePos := MousePos
+            ;this.MacrosData[this.MacroSelectEditIndex].HotKey := MacroData(Name, HotKey, Keys, MousePos)
+            this.LVMacros.Modify(this.MacroSelectEditIndex,, Name, HotKey, Keys.Length, MousePos.Length)
+        }
+        else
+        {
+            this.MacrosData.Push(MacroData(Name, HotKey, Keys, MousePos))
+            this.LVMacros.Add(, Name, HotKey, Keys.Length, MousePos.Length)
+        }
+        this.Tabs.Choose(1)
+        this.MacroSelectEditIndex := 0
+    }
 
-	SendMacro()
-	{
-		this.StartTime := A_TickCount
-		index := 1
+    ; =======================  CALLBACKS  =========================
+    LV_DoubleClickMacro(LV, RowNumber)
+    {
+        if(RowNumber)
+        {
+            this.MacroSelectEditIndex := RowNumber
+            this.Tabs.Choose(2)
+            this.GUICreateEditMacro.InitDatas(this.MacrosData[RowNumber].Name, this.MacrosData[RowNumber].HotKey, this.MacrosData[RowNumber].Keys, this.MacrosData[RowNumber].MousePos)
+        }
+    }
+    LV_ItemSelectMacro(LV, RowNumber, other)
+    {
 
-		while(index < this.Macro.Length)
-		{
-			if(A_TickCount - this.StartTime > this.Macro[index].AtTime)
-			{
-				Send "{"  this.Macro[index].Name (this.Macro[index].State == 0 ? " up" : " down") "}"
-				index := index + 1
-			}
-		}
-	}
+    }
+    Tab_Change(GuiCtrlObj, Info)
+    {
+        ;this.GUICreateEditMacro.InitDatas(this.MacrosData[this.MacroSelectEditIndex].Name, this.MacrosData[this.MacroSelectEditIndex].Keys, this.MacrosData[this.MacroSelectEditIndex].MousePos)
+        this.GUICreateEditMacro.InitDatas("Macro_" this.MacrosData.Length, "", [], [])
+    }
 }
