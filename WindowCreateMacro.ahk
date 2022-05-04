@@ -98,11 +98,11 @@ Class GUICreateMacro
 
 		for key in Keys
 		{
-			this.AddKey({Name: key.Name, State: key.State}, key.AtTime * 1000)
+			this.AddKey({Name: key.Name, State: key.State}, key.Time * 1000)
 		}
 		for M_pos in MousePos
 		{
-			this.AddMousePos(M_pos.Position, M_pos.AtTime * 1000)
+			this.AddMousePos(M_pos.Position, M_pos.Time * 1000)
 		}
 	}
 
@@ -198,25 +198,25 @@ Class GUICreateMacro
 		return 0
 	}
 
-	EditKeyAtRow(RowNumber, Name, State, AtTime) ;Time en ms
+	EditKeyAtRow(RowNumber, Name, State, Time) ;Time en ms
 	{
 		this.Keys[RowNumber].Name := Name
-        this.Keys[RowNumber].AtTime := Format("{:.2f}", AtTime/1000)
+        this.Keys[RowNumber].Time := Format("{:.2f}", Time/1000)
         this.Keys[RowNumber].State := State
 
-        this.LVKeysAction.Modify(RowNumber,, Name, (State == 0 ? "Up" : "Down"), Format("{:.2f}", AtTime/1000))
+        this.LVKeysAction.Modify(RowNumber,, Name, (State == 0 ? "Up" : "Down"), Format("{:.2f}", Time/1000))
 	}
 
-	AddKey(key, atTime) ; Time en ms
+	AddKey(key, Time) ; Time en ms
 	{
-		this.Keys.Push({Name: key.Name, State: key.State, AtTime: Format("{:.2f}", atTime/1000)})
-		this.LVKeysAction.Add(, key.Name, (key.State == 0 ? "Up" : "Down"), Format("{:.2f}", atTime/1000))
+		this.Keys.Push({Name: key.Name, State: key.State, Time: Format("{:.2f}", Time/1000)})
+		this.LVKeysAction.Add(, key.Name, (key.State == 0 ? "Up" : "Down"), Format("{:.2f}", Time/1000))
 	}
 
-	AddMousePos(M_pos, atTime) ; Time en ms
+	AddMousePos(M_pos, Time) ; Time en ms
 	{
-		this.M_Pos.Push({Position: M_pos, AtTime: atTime/1000})
-		this.LVMousePos.Add(, Format("{:i}", M_pos.x), Format("{:i}", M_pos.y), Format("{:.2f}", atTime/1000))
+		this.M_Pos.Push({Position: M_pos, Time: Time/1000})
+		this.LVMousePos.Add(, Format("{:i}", M_pos.x), Format("{:i}", M_pos.y), Format("{:.2f}", Time/1000))
 	}
 
 	; ======================= CALLBACKS =====================
@@ -302,6 +302,7 @@ Class GUICreateMacro
 			if not RowNumber  ; The above returned zero, so there are no more selected rows.
 				break
 			this.LVKeysAction.Delete(RowNumber)  ; Clear the row from the ListView.
+			this.Keys.RemoveAt(RowNumber)
 		}
 		Loop ; DELETE All row SELECTED on Mouse List View
 		{
@@ -309,6 +310,7 @@ Class GUICreateMacro
 			if not RowNumber  ; The above returned zero, so there are no more selected rows.
 				break
 			this.LVMousePos.Delete(RowNumber)  ; Clear the row from the ListView.
+			this.M_Pos.RemoveAt(RowNumber)
 		}
 	}
 
@@ -343,12 +345,12 @@ Class GUICreateMacro
 		while((this.Keys.Length < this.M_Pos.Length ? MouseIndex : KeyIndex) < whileSize)
 		{
 			timer := (A_TickCount - this.StartTime) / 1000
-			if(KeyIndex < this.Keys.Length && timer > this.Keys[KeyIndex].AtTime)
+			if(KeyIndex < this.Keys.Length && timer > this.Keys[KeyIndex].Time)
 			{
 				Send "{"  this.Keys[KeyIndex].Name (this.Keys[KeyIndex].State == 0 ? " up" : " down") "}"
 				KeyIndex := KeyIndex + 1
 			}
-			if(MouseIndex < this.M_Pos.Length && timer > this.M_Pos[MouseIndex].AtTime)
+			if(MouseIndex < this.M_Pos.Length && timer > this.M_Pos[MouseIndex].Time)
 			{
 				MouseMove(this.M_Pos[MouseIndex].Position.x, this.M_Pos[MouseIndex].Position.y) ;The speed to move the mouse in the range 0 (fastest) to 100 (slowest).
 				MouseIndex := MouseIndex + 1

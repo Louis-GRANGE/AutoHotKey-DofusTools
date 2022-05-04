@@ -1,68 +1,12 @@
 #include WindowCreateMacro.ahk
-#Include GUIWindow.ahk
-
-Class MacroData
-{
-    __New(Name, HotKeyShortCutStr, Keys, MousePos) ;Construtor
-	{
-        this.Name := Name
-        this.Keys := Keys
-        this.MousePos := MousePos
-        this.HotKeyShortCutStr := HotKeyShortCutStr
-
-        this.HotKeyFunc := (ThisHotkey) => this.SendMacro(ThisHotkey)
-        this.HotKey := Hotkey(HotKeyShortCutStr, this.HotKeyFunc)
-    }
-
-    ; ======================= FUNCTION =====================
-	SendMacro(ThisHotkey)
-	{
-		StartTime := A_TickCount
-		KeyIndex := 1
-		MouseIndex := 1
-		whileSize := (this.Keys.Length < this.MousePos.Length ? this.MousePos.Length : this.Keys.Length)
-
-		while((this.Keys.Length < this.MousePos.Length ? MouseIndex : KeyIndex) < whileSize)
-		{
-			timer := (A_TickCount - StartTime) / 1000
-			if(KeyIndex < this.Keys.Length && timer > this.Keys[KeyIndex].AtTime)
-			{
-				Send "{"  this.Keys[KeyIndex].Name (this.Keys[KeyIndex].State == 0 ? " up" : " down") "}"
-				KeyIndex := KeyIndex + 1
-			}
-			if(MouseIndex < this.MousePos.Length && timer > this.MousePos[MouseIndex].AtTime)
-			{
-				MouseMove(this.MousePos[MouseIndex].Position.x, this.MousePos[MouseIndex].Position.y) ;The speed to move the mouse in the range 0 (fastest) to 100 (slowest).
-				MouseIndex := MouseIndex + 1
-			}
-		}
-	}
-
-    ChangeHotKey(HotKeyShortCutStr)
-    {
-        Hotkey(this.HotKeyShortCutStr, "off")
-        this.HotKeyShortCutStr := HotKeyShortCutStr
-        Hotkey(this.HotKeyShortCutStr, this.HotKeyFunc)
-    }
-
-    TurnOn()
-    {
-        Hotkey(this.HotKeyShortCut, "on")
-    }
-
-    TurnOff()
-    {
-        Hotkey(this.HotKeyShortCut, "off")
-    }
-}
-
-
+#include GUIWindow.ahk
+#include MacroData.ahk
 
 Class GUIMacro extends GUIWindow
 {
 	__New(Title := "Keys", TickSpeed := 0, IsVisible := true) ;Construtor
 	{
-        this.MacrosData := []
+        this.INITMacroFile := INIMacro()
         this.MacroSelectEditIndex := 0
 
         super.__New(Title, TickSpeed, IsVisible)
@@ -92,8 +36,16 @@ Class GUIMacro extends GUIWindow
         this.Tabs.UseTab(2)
         this.GUICreateEditMacro := GUICreateMacro(this)
 
-        ;this.MacrosData.Push(MacroData("Name", {Name: "A", State: 1, AtTime: Format("{:.2f}", 1)}, {Position: Vector2(0, 0), AtTime: Format("{:.2f}", 1)}))
-        ;this.AddMacro("Name", [{Name: "A", State: 1, AtTime: Format("{:.2f}", 1)}], [{Position: Vector2(0, 0), AtTime: Format("{:.2f}", 1)}])
+        ;this.MacrosData.Push(MacroData("Name", {Name: "A", State: 1, Time: Format("{:.2f}", 1)}, {Position: Vector2(0, 0), Time: Format("{:.2f}", 1)}))
+        ;this.AddMacro("Name", [{Name: "A", State: 1, Time: Format("{:.2f}", 1)}], [{Position: Vector2(0, 0), Time: Format("{:.2f}", 1)}])
+
+
+        ; INIT Array and LV with File datas
+        this.MacrosData := this.INITMacroFile.GetAllMacros()
+        for Macro in this.MacrosData
+        {
+            this.LVMacros.Add(, Macro.Name, Macro.HotKeyShortCutStr, Macro.Keys.Length, Macro.MousePos.Length)
+        }
     }
 
     AddMacro(Name, HotKey, Keys, MousePos)
@@ -114,6 +66,10 @@ Class GUIMacro extends GUIWindow
             this.LVMacros.Add(, Name, HotKey, Keys.Length, MousePos.Length)
         }
         this.Tabs.Choose(1)
+
+        ; Adding Macro to the .ini file
+        this.INITMacroFile.AddMacro(Name, HotKey, Keys, MousePos)
+
         this.MacroSelectEditIndex := 0
     }
 

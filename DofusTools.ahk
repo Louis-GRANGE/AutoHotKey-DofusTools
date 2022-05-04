@@ -10,6 +10,8 @@ SetWorkingDir A_ScriptDir ; Ensures a consistent starting directory.
 #Include Drawing.ahk
 #Include Vector.ahk
 
+#Include Library/INIMacro.ahk
+
 OutputDebug("[Init] Program start\n")
 
 ; Init Update Function
@@ -19,9 +21,11 @@ SetTimer UpdateOSD, 100
 DofusClassName := "ApolloRuntimeContentWindow"
 WINDOWS := []
 
+; ======================= STATIC Class =====================
 GUIInfo("NEWGUI1", 0, true)
 GUIInfo("NEWGUI2", 0, false)
 WindowMacro := GUIMacro(,1,false)
+
 
 CustomMenu(WINDOWS[3], WINDOWS) ;ADD menu on all active windows
 

@@ -12,7 +12,7 @@ Class GUIEditingKey extends Gui
         this.BackColor := "3A3635"
 
         this.Add("Text", "x10 y10 cLime", "Timer (s): ")
-        this.Timer := this.Add("Edit", "x150 y10 r1 Number vEditTime w150 h10" , Format("{:.2f}", GUIMacroRef.Keys[RowNumber].AtTime))
+        this.Timer := this.Add("Edit", "x150 y10 r1 Number vEditTime w150 h10" , Format("{:.2f}", GUIMacroRef.Keys[RowNumber].Time))
 
         this.Add("Text", "x10 y50 cLime", "Key: ")
         this.Input := this.Add("Edit", "x150 y50 r1 vEditKey w150 h10", GUIMacroRef.Keys[RowNumber].Name)
