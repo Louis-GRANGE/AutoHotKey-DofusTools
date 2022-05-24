@@ -12,7 +12,7 @@ SetWorkingDir A_ScriptDir ; Ensures a consistent starting directory.
 
 #Include Library/INIMacro.ahk
 
-OutputDebug("[Init] Program start\n")
+OutputDebug("[Init] Program start`n")
 
 ; Init Update Function
 SetTimer UpdateOSD, 100
@@ -56,13 +56,12 @@ F2::
 
 F3::
 {
-	WindowMacro.GUICreateEditMacro.DisplayMouseWay(true)
+	WindowMacro.GUICreateEditMacro.DisplayMouseWay(!WindowMacro.GUICreateEditMacro.IsDisplayMouseWay)
 	return
 }
 
 F4::
 {
-	WindowMacro.GUICreateEditMacro.DisplayMouseWay(false)
 	return
 }
 

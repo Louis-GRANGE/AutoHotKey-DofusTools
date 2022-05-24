@@ -1,12 +1,15 @@
 Class MacroData
 {
-    __New(Name, HotKeyShortCutStr, Keys, MousePos) ;Construtor
+    __New(Name, HotKeyShortCutStr, isLoop, Keys, MousePos) ;Construtor
 	{
         this.Name := Name
         this.Keys := Keys
         this.MousePos := MousePos
         this.HotKeyShortCutStr := HotKeyShortCutStr
+        this.isLoop := isLoop
+        this.isLooping := false
 
+        this.LoopTimerFunc := () => this.UseMacro()
         this.HotKeyFunc := (ThisHotkey) => this.SendMacro(ThisHotkey)
         this.HotKey := Hotkey(HotKeyShortCutStr, this.HotKeyFunc)
     }
@@ -14,6 +17,27 @@ Class MacroData
     ; ======================= FUNCTION =====================
 	SendMacro(ThisHotkey)
 	{
+        if(this.isLoop)
+        {
+            if(!this.isLooping)
+            {
+                SetTimer(this.LoopTimerFunc, this.GetTimeOfMacro())
+                this.isLooping := true
+            }
+            else
+            {
+                SetTimer(this.LoopTimerFunc, 0)
+                this.isLooping := false
+            }
+        }
+        else
+        {
+            this.UseMacro()
+        }
+	}
+
+    UseMacro()
+    {
 		StartTime := A_TickCount
 		KeyIndex := 1
 		MouseIndex := 1
@@ -33,7 +57,18 @@ Class MacroData
 				MouseIndex := MouseIndex + 1
 			}
 		}
-	}
+    }
+
+    GetTimeOfMacro()
+    {
+        KeyMaxTime := (this.Keys.Length != 0 ? this.Keys[this.Keys.Length].Time : 0)
+        MousePosMaxTime := (this.MousePos.Length != 0 ? this.MousePos[this.MousePos.Length].Time : 0)
+        
+        if(KeyMaxTime > MousePosMaxTime)
+            return KeyMaxTime
+        else
+            return MousePosMaxTime
+    }
 
     ChangeHotKey(HotKeyShortCutStr)
     {

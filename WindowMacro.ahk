@@ -23,7 +23,7 @@ Class GUIMacro extends GUIWindow
         
 		; =======================  TAB 1  ========================= for all macros
 		this.SetFont("s10")
-		this.LVMacros := this.Add("ListView","x10 y130 NoSort -ReadOnly -WantF2 +Report r20 w300",["Name                     ", "HotKey","Keys","Mouse Pos"])
+		this.LVMacros := this.Add("ListView","x10 y130 NoSort -ReadOnly -WantF2 +Report r20 w300",["Name                     ", "HotKey", "Loop","Keys","Mouse Pos"])
 		; Notify the script whenever the user double clicks a row:
 		this.LV_DoubleClickMacroFunc := (LV, RowNumber) => this.LV_DoubleClickMacro(LV, RowNumber)
 		this.LV_ItemSelectMacroFunc := (LV, RowNumber, other) => this.LV_ItemSelectMacro(LV, RowNumber, other)
@@ -44,11 +44,11 @@ Class GUIMacro extends GUIWindow
         this.MacrosData := this.INITMacroFile.GetAllMacros()
         for Macro in this.MacrosData
         {
-            this.LVMacros.Add(, Macro.Name, Macro.HotKeyShortCutStr, Macro.Keys.Length, Macro.MousePos.Length)
+            this.LVMacros.Add(, Macro.Name, Macro.HotKeyShortCutStr, Macro.IsLoop == 0 ? "No" : "Yes", Macro.Keys.Length, Macro.MousePos.Length)
         }
     }
 
-    AddMacro(Name, HotKey, Keys, MousePos)
+    AddMacro(Name, HotKey, IsLoop, Keys, MousePos)
     {
 		;HotKey()
         if(this.MacroSelectEditIndex)
@@ -56,19 +56,20 @@ Class GUIMacro extends GUIWindow
             this.MacrosData[this.MacroSelectEditIndex].ChangeHotKey(HotKey)
             this.MacrosData[this.MacroSelectEditIndex].Name := Name
             this.MacrosData[this.MacroSelectEditIndex].Keys := Keys
+            this.MacrosData[this.MacroSelectEditIndex].IsLoop := IsLoop
             this.MacrosData[this.MacroSelectEditIndex].MousePos := MousePos
             ;this.MacrosData[this.MacroSelectEditIndex].HotKey := MacroData(Name, HotKey, Keys, MousePos)
-            this.LVMacros.Modify(this.MacroSelectEditIndex,, Name, HotKey, Keys.Length, MousePos.Length)
+            this.LVMacros.Modify(this.MacroSelectEditIndex,, Name, HotKey, IsLoop == 0 ? "No" : "Yes", Keys.Length, MousePos.Length)
         }
         else
         {
-            this.MacrosData.Push(MacroData(Name, HotKey, Keys, MousePos))
-            this.LVMacros.Add(, Name, HotKey, Keys.Length, MousePos.Length)
+            this.MacrosData.Push(MacroData(Name, HotKey, IsLoop, Keys, MousePos))
+            this.LVMacros.Add(, Name, HotKey, IsLoop == 0 ? "No" : "Yes", Keys.Length, MousePos.Length)
         }
         this.Tabs.Choose(1)
 
         ; Adding Macro to the .ini file
-        this.INITMacroFile.AddMacro(Name, HotKey, Keys, MousePos)
+        this.INITMacroFile.AddMacro(Name, HotKey, IsLoop, Keys, MousePos)
 
         this.MacroSelectEditIndex := 0
     }
@@ -80,7 +81,7 @@ Class GUIMacro extends GUIWindow
         {
             this.MacroSelectEditIndex := RowNumber
             this.Tabs.Choose(2)
-            this.GUICreateEditMacro.InitDatas(this.MacrosData[RowNumber].Name, this.MacrosData[RowNumber].HotKey, this.MacrosData[RowNumber].Keys, this.MacrosData[RowNumber].MousePos)
+            this.GUICreateEditMacro.InitDatas(this.MacrosData[RowNumber].Name, this.MacrosData[RowNumber].HotKey, this.MacrosData[RowNumber].IsLoop, this.MacrosData[RowNumber].Keys, this.MacrosData[RowNumber].MousePos)
         }
     }
     LV_ItemSelectMacro(LV, RowNumber, other)
@@ -90,6 +91,6 @@ Class GUIMacro extends GUIWindow
     Tab_Change(GuiCtrlObj, Info)
     {
         ;this.GUICreateEditMacro.InitDatas(this.MacrosData[this.MacroSelectEditIndex].Name, this.MacrosData[this.MacroSelectEditIndex].Keys, this.MacrosData[this.MacroSelectEditIndex].MousePos)
-        this.GUICreateEditMacro.InitDatas("Macro_" this.MacrosData.Length, "", [], [])
+        this.GUICreateEditMacro.InitDatas("Macro_" this.MacrosData.Length, "", 0, [], [])
     }
 }

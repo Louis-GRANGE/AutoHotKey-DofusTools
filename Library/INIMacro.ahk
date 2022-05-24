@@ -19,11 +19,12 @@ Class INIMacro
 	}
 
 
-	AddMacro(MacroName, HotKey, Keys, MousePos)
+	AddMacro(MacroName, HotKey, isLoop, Keys, MousePos)
 	{
 		; ==========================  INFO  ==========================
 		IniWrite(MacroName, A_ScriptDir "\Ressources\" MacroName ".ini", "info", "name")
 		IniWrite(HotKey, A_ScriptDir "\Ressources\" MacroName ".ini", "info", "hotkey")
+		IniWrite(isLoop, A_ScriptDir "\Ressources\" MacroName ".ini", "info", "loop")
 
 		; ==========================  KEYS  ==========================
 		ParsedKeysName := ""
@@ -73,6 +74,7 @@ Class INIMacro
 		; ==========================  INFO  ==========================
 		MacroName := IniRead(File, "info", "name")
 		HotKey := IniRead(File, "info", "hotkey")
+		isLoop := IniRead(File, "info", "loop")
 
 		; ==========================  KEYS  ==========================
 		KeysName := IniRead(File, "key", "name")
@@ -104,6 +106,6 @@ Class INIMacro
 			MousePos.Push({Position: Vector2(MousePosX[A_Index], MousePosY[A_Index]), Time: MouseTime[A_Index]})
 		}
 
-		return MacroData(MacroName, HotKey, Keys, MousePos)
+		return MacroData(MacroName, HotKey, isLoop, Keys, MousePos)
 	}
 }

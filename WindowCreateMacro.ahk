@@ -11,8 +11,10 @@ Class GUICreateMacro
 		this.detectKeyboard := true
 		this.detectMouse := true
 		this.detectMousePos := true
+		this.isLoop := true
 		this.StartTime := A_TickCount
 		this.ListeningInput := false
+		this.IsDisplayMouseWay := false
 		this.NumberSelectedKey := 0
 		this.NumberSelectedMousePos := 0
 
@@ -38,6 +40,9 @@ Class GUICreateMacro
 		this.CBPosMouse := this.GUIparent.Add("CheckBox", "vCBPosMouse x170 y110 cWhite"  (this.detectMousePos?" Checked":""), "Mouse Pos")
 		this.CBPosMouseFunc := (GuiCtrlObj, Info) => this.CBPosMouse_Click(GuiCtrlObj, Info)
 		this.CBPosMouse.OnEvent("Click", this.CBPosMouseFunc)
+		this.CBIsLoop := this.GUIparent.Add("CheckBox", "vCBIsLoop x265 y110 cWhite"  (this.isLoop?" Checked":""), "Loop")
+		this.CBIsLoopFunc := (GuiCtrlObj, Info) => this.CBIsLoop_Click(GuiCtrlObj, Info)
+		this.CBIsLoop.OnEvent("Click", this.CBIsLoopFunc)
 
 
 		; =======================  Text  ========================= Important text Info
@@ -62,21 +67,26 @@ Class GUICreateMacro
 		this.LVMousePos.OnEvent("ItemSelect", this.LV_ItemSelectMouseFunc)
 
 
-		; =======================  Button  ========================= 
+		; =======================  Button  =========================
 		; Start Listen Inputs Button
-        this.BtnListen := this.GUIparent.Add("Button", "x70 y560 Default w80", "Start")
+        this.BtnListen := this.GUIparent.Add("Button", "x25 y560 Default w80", "Start")
         this.BtnListen_ClickFunc := (GuiCtrlObj, n) => this.BtnListen_Click(GuiCtrlObj, n) ; Callback Btn
         this.BtnListen.OnEvent("Click", this.BtnListen_ClickFunc) ; Call BtnOK_ClickFunc when clicked.
+		; Save Inputs Button
+        this.BtnSave := this.GUIparent.Add("Button", "x115 y560 Default w80", "SAVE")
+        this.BtnSave_ClickFunc := (GuiCtrlObj, n) => this.BtnSave_Click(GuiCtrlObj, n) ; Callback Btn
+        this.BtnSave.OnEvent("Click", this.BtnSave_ClickFunc) ; Call BtnOK_ClickFunc when clicked.
+		; Remove Time Inputs Button
+        this.BtnTimeSet := this.GUIparent.Add("Button", "x320 y107 Default w100 h20", "Supp. Time")
+        this.BtnTimeSet_ClickFunc := (GuiCtrlObj, n) => this.BtnTimeSet_Click(GuiCtrlObj, n) ; Callback Btn
+        this.BtnTimeSet.OnEvent("Click", this.BtnTimeSet_ClickFunc) ; Call BtnOK_ClickFunc when clicked.
+		this.BtnTimeSet.Enabled := 0
 		; Delete Selection
         this.BtnDelete := this.GUIparent.Add("Button", "x280 y560 Default w80", "Delete")
         this.BtnDelete_ClickFunc := (GuiCtrlObj, n) => this.BtnDelete_Click(GuiCtrlObj, n) ; Callback Btn
         this.BtnDelete.OnEvent("Click", this.BtnDelete_ClickFunc) ; Call BtnOK_ClickFunc when clicked.
 		this.BtnDelete.Enabled := 0
-		; Save Inputs Button
-        this.BtnSave := this.GUIparent.Add("Button", "x175 y560 Default w80", "SAVE")
-        this.BtnSave_ClickFunc := (GuiCtrlObj, n) => this.BtnSave_Click(GuiCtrlObj, n) ; Callback Btn
-        this.BtnSave.OnEvent("Click", this.BtnSave_ClickFunc) ; Call BtnOK_ClickFunc when clicked.
-		this.BtnDelete.Enabled := 0
+
 
 		;this.GUIparent.BackColor := "3A3635"
 
@@ -85,10 +95,11 @@ Class GUICreateMacro
 	}
 
 	; ======================= FUNCTION =====================
-	InitDatas(Name, HotKey, Keys, MousePos)
+	InitDatas(Name, HotKey, IsLoop, Keys, MousePos)
 	{
 		this.EdtName.Text := Name
 		this.HKMacro := Hotkey
+		this.CBIsLoop.Value := IsLoop
 
 		this.Keys := []  ; Keys
 		this.M_Pos := [] ; MousePos
@@ -241,11 +252,17 @@ Class GUICreateMacro
 		{
 			this.BtnDelete.Text := "Delete (" AllSelected ")"
 			this.BtnDelete.Enabled := 1
+
+			this.BtnTimeSet.Text := "Supp. Time (" AllSelected ")"
+			this.BtnTimeSet.Enabled := 1
 		}
 		else
 		{
 			this.BtnDelete.Text := "Delete"
 			this.BtnDelete.Enabled := 0
+
+			this.BtnTimeSet.Text := "Supp. Time"
+			this.BtnTimeSet.Enabled := 0
 		}
 	}
 	LV_ItemSelectMouse(GuiCtrlObj, Item, other)
@@ -258,11 +275,17 @@ Class GUICreateMacro
 		{
 			this.BtnDelete.Text := "Delete (" AllSelected ")"			
 			this.BtnDelete.Enabled := 1
+
+			this.BtnTimeSet.Text := "Supp. Time (" AllSelected ")"
+			this.BtnTimeSet.Enabled := 1
 		}
 		else
 		{
 			this.BtnDelete.Text := "Delete"
 			this.BtnDelete.Enabled := 0
+
+			this.BtnTimeSet.Text := "Supp. Time"
+			this.BtnTimeSet.Enabled := 0
 		}
 	}
 
@@ -304,6 +327,7 @@ Class GUICreateMacro
 			this.LVKeysAction.Delete(RowNumber)  ; Clear the row from the ListView.
 			this.Keys.RemoveAt(RowNumber)
 		}
+		RowNumber := 0
 		Loop ; DELETE All row SELECTED on Mouse List View
 		{
 			RowNumber := this.LVMousePos.GetNext(RowNumber - 1)
@@ -314,9 +338,32 @@ Class GUICreateMacro
 		}
 	}
 
+	BtnTimeSet_Click(GuiCtrlObj, n) ; TIMESET Btn
+	{
+		RowNumber := 0  ; This causes the first iteration to start the search at the top.
+		; this.LVKeysAction.Modify(RowNumber,,,,0)
+		Loop ; DELETE All row SELECTED on Key List View
+		{
+			RowNumber := this.LVKeysAction.GetNext(RowNumber)
+			if not RowNumber  ; The above returned zero, so there are no more selected rows.
+				break
+			this.LVKeysAction.Modify(RowNumber,,,,0)
+			this.Keys[RowNumber].Time := 0
+		}
+		RowNumber := 0
+		Loop ; DELETE All row SELECTED on Mouse List View
+		{
+			RowNumber := this.LVMousePos.GetNext(RowNumber)
+			if not RowNumber  ; The above returned zero, so there are no more selected rows.
+				break
+			this.LVMousePos.Modify(RowNumber,,,,0)
+			this.M_Pos[RowNumber].Time := 0
+		}
+	}
+
 	BtnSave_Click(GuiCtrlObj, n)
 	{
-		this.GUIparent.AddMacro(this.EdtName.Value, this.GUIparent.HKMacro.Value, this.Keys, this.M_Pos)
+		this.GUIparent.AddMacro(this.EdtName.Value, this.GUIparent.HKMacro.Value, this.isLoop, this.Keys, this.M_Pos)
 	}
 
 	CBInputKeyboard_Click(GuiCtrlObj, Info)
@@ -330,6 +377,10 @@ Class GUICreateMacro
 	CBPosMouse_Click(GuiCtrlObj, Info)
 	{
 		this.detectMousePos := GuiCtrlObj.Value
+	}
+	CBIsLoop_Click(GuiCtrlObj, Info)
+	{
+		this.isLoop := GuiCtrlObj.Value
 	}
 
 
@@ -377,5 +428,6 @@ Class GUICreateMacro
 		{
 			this.WindowDrawing.CleanUp()
 		}
+		this.IsDisplayMouseWay := IsShow
 	}
 }
