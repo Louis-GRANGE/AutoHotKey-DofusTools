@@ -1,2 +1,2 @@
-# AutoHotKey-DofusTools
+# AutoHotKey-Tools
  
